@@ -1,0 +1,18 @@
+# build products (tools/qp assemble)
+*.vo
+*.vok
+*.vos
+*.glob
+*.aux
+.*.aux
+.lia.cache
+.nia.cache
+CoqMakefile
+CoqMakefile.conf
+.CoqMakefile.d
+Makefile.coq
+Makefile.coq.conf
+.Makefile.coq.d
+build/
+build.log
+__pycache__/

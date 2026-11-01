@@ -1,0 +1,3 @@
+[submodule "quickproof"]
+	path = quickproof
+	url = https://github.com/genproof/quickproof-public.git

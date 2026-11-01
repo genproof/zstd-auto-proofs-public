@@ -1,0 +1,4 @@
+-Q quickproof/coq/QuickProof QuickProof
+-R src Zstd
+quickproof/coq/QuickProof
+src
