@@ -3,9 +3,13 @@
    quickproof/tools/new_contract.py.
 
    Proving `suite` in one worktree makes all laws share one model and one
-   specification per function of the code under test.  It needs the proof of
-   every theorem in src/contracts/*.v: an Admitted law shows up in
-   Print Assumptions of `suite`.
+   specification per function of the code under test.  The statement of
+   `suite` below is the generated one: the 44 laws of the contract.
+   `suite_x` is the conjunction of the 19 x_ laws (the first zstd proof),
+   proved from the parts of src/proof/.  The 25 short laws are proved one
+   lemma per law in src/proof/laws/Law_<law>.v, and `suite` is their
+   conjunction with `suite_x`.  Each law is also a theorem of its own,
+   with its generated name and statement, in src/contracts/laws.v.
    ====================================================================== *)
 
 Require Import QuickProof.Contract.
@@ -54,6 +58,121 @@ Require Zstd.contracts.x_valid_oneshot.
 Require Zstd.contracts.x_valid_params.
 Require Zstd.contracts.x_valid_stream.
 
+Require Import VST.floyd.proofauto.
+Require Zstd.proof.top.Asm6 Zstd.proof.top.Zstd6 Zstd.proof.libc.LibcAllBodies.
+Require Zstd.proof.harness.bound.Main_bound Zstd.proof.harness.WriterHarnesses.
+Require Zstd.proof.harness.any_bufferless.Main_any_bufferless.
+Require Zstd.proof.harness.any_dict.Main_any_dict.
+Require Zstd.proof.harness.any_dict_copy.Main_any_dict_copy.
+Require Zstd.proof.harness.any_info.Main_any_info.
+Require Zstd.proof.harness.any_info_extra.Main_any_info_extra.
+Require Zstd.proof.harness.any_oneshot.Main_any_oneshot.
+Require Zstd.proof.harness.any_params.Main_any_params.
+Require Zstd.proof.harness.any_stream.Main_any_stream.
+
+(* The plan: the generic assembly (Asm6) applied to the decoder's obligation (Zstd6),
+   the libc unit's bodies and the obligation of every harness, all with the API of Spec_api6 (v3). *)
+Lemma api_no_memcpy DC DD : ~ In Zstd.proof.libc.LibcSpec._memcpy (map fst (Zstd.proof.zstd.Spec_api6.Specs_api DC DD)).
+Proof.
+  intro H. simpl in H. vm_compute in H.
+  repeat (destruct H as [H | H]; [discriminate H |]). exact H.
+Qed.
+
+Lemma api_bound_disjoint DC DD :
+  list_disjoint (map fst (Zstd.proof.zstd.Spec_api6.Specs_api DC DD))
+                (map fst Zstd.proof.harness.bound.HOK_bound.Externals).
+Proof.
+  intros x y Hx Hy E. subst y. simpl in Hx. vm_compute in Hy, Hx.
+  repeat (destruct Hy as [Hy | Hy]; [subst x; repeat (destruct Hx as [Hx | Hx]; [discriminate Hx |]); exact Hx |]).
+  exact Hy.
+Qed.
+
+(* The 19 laws of the first proof (prefix x_), proved together on one specification layer of the decoder. *)
+Lemma suite_x :
+  harness_safe Zstd.contracts.x_any_bufferless.whole_prog /\
+  harness_safe Zstd.contracts.x_any_dict.whole_prog /\
+  harness_safe Zstd.contracts.x_any_dict_copy.whole_prog /\
+  harness_safe Zstd.contracts.x_any_info.whole_prog /\
+  harness_safe Zstd.contracts.x_any_info_extra.whole_prog /\
+  harness_safe Zstd.contracts.x_any_oneshot.whole_prog /\
+  harness_safe Zstd.contracts.x_any_params.whole_prog /\
+  harness_safe Zstd.contracts.x_any_stream.whole_prog /\
+  harness_safe Zstd.contracts.x_bound.whole_prog /\
+  harness_safe Zstd.contracts.x_detect.whole_prog /\
+  harness_safe Zstd.contracts.x_stable_out.whole_prog /\
+  harness_safe Zstd.contracts.x_valid_bufferless.whole_prog /\
+  harness_safe Zstd.contracts.x_valid_dict.whole_prog /\
+  harness_safe Zstd.contracts.x_valid_dict_api.whole_prog /\
+  harness_safe Zstd.contracts.x_valid_dict_copy.whole_prog /\
+  harness_safe Zstd.contracts.x_valid_info.whole_prog /\
+  harness_safe Zstd.contracts.x_valid_oneshot.whole_prog /\
+  harness_safe Zstd.contracts.x_valid_params.whole_prog /\
+  harness_safe Zstd.contracts.x_valid_stream.whole_prog.
+Proof.
+  destruct Zstd.proof.top.Zstd6.zstd_ok as (DC & DD & Int & HZ & HI).
+  destruct (Zstd.proof.top.Asm6.assembly Int (Zstd.proof.zstd.Spec_api6.Specs_api DC DD) HZ HI
+              (api_no_memcpy DC DD) Zstd.proof.libc.LibcAllBodies.libc_bodies)
+    as (A_any_bufferless & A_any_dict & A_any_dict_copy & A_any_info & A_any_info_extra & A_any_oneshot & A_any_params & A_any_stream & A_bound & A_detect & A_stable_out & A_valid_bufferless & A_valid_dict & A_valid_dict_api & A_valid_dict_copy & A_valid_info & A_valid_oneshot & A_valid_params & A_valid_stream).
+  destruct (Zstd.proof.harness.WriterHarnesses.writer_harnesses_ok DC DD)
+    as ([H_detect W_detect] & [H_stable_out W_stable_out] & [H_valid_bufferless W_valid_bufferless] & [H_valid_dict W_valid_dict] & [H_valid_dict_api W_valid_dict_api] & [H_valid_dict_copy W_valid_dict_copy] & [H_valid_info W_valid_info] & [H_valid_oneshot W_valid_oneshot] & [H_valid_params W_valid_params] & [H_valid_stream W_valid_stream]).
+  destruct (Zstd.proof.harness.any_bufferless.Main_any_bufferless.any_bufferless_ok DC DD) as [H_any_bufferless W_any_bufferless].
+  destruct (Zstd.proof.harness.any_dict.Main_any_dict.any_dict_ok DC DD) as [H_any_dict W_any_dict].
+  destruct (Zstd.proof.harness.any_dict_copy.Main_any_dict_copy.any_dict_copy_ok DC DD) as [H_any_dict_copy W_any_dict_copy].
+  destruct (Zstd.proof.harness.any_info.Main_any_info.any_info_ok DC DD) as [H_any_info W_any_info].
+  destruct (Zstd.proof.harness.any_info_extra.Main_any_info_extra.any_info_extra_ok DC DD) as [H_any_info_extra W_any_info_extra].
+  destruct (Zstd.proof.harness.any_oneshot.Main_any_oneshot.any_oneshot_ok DC DD) as [H_any_oneshot W_any_oneshot].
+  destruct (Zstd.proof.harness.any_params.Main_any_params.any_params_ok DC DD) as [H_any_params W_any_params].
+  destruct (Zstd.proof.harness.any_stream.Main_any_stream.any_stream_ok DC DD) as [H_any_stream W_any_stream].
+  pose proof (Zstd.proof.harness.bound.Main_bound.bound_ok _ (api_bound_disjoint DC DD)) as W_bound.
+  split; [exact (A_any_bufferless _ W_any_bufferless) |].
+  split; [exact (A_any_dict _ W_any_dict) |].
+  split; [exact (A_any_dict_copy _ W_any_dict_copy) |].
+  split; [exact (A_any_info _ W_any_info) |].
+  split; [exact (A_any_info_extra _ W_any_info_extra) |].
+  split; [exact (A_any_oneshot _ W_any_oneshot) |].
+  split; [exact (A_any_params _ W_any_params) |].
+  split; [exact (A_any_stream _ W_any_stream) |].
+  split; [exact (A_bound _ W_bound) |].
+  split; [exact (A_detect _ W_detect) |].
+  split; [exact (A_stable_out _ W_stable_out) |].
+  split; [exact (A_valid_bufferless _ W_valid_bufferless) |].
+  split; [exact (A_valid_dict _ W_valid_dict) |].
+  split; [exact (A_valid_dict_api _ W_valid_dict_api) |].
+  split; [exact (A_valid_dict_copy _ W_valid_dict_copy) |].
+  split; [exact (A_valid_info _ W_valid_info) |].
+  split; [exact (A_valid_oneshot _ W_valid_oneshot) |].
+  split; [exact (A_valid_params _ W_valid_params) |].
+  exact (A_valid_stream _ W_valid_stream).
+Qed.
+
+(* The 25 short laws, one lemma per law (src/proof/laws/Law_<law>.v). *)
+Require Zstd.proof.laws.Law_api_content_size.
+Require Zstd.proof.laws.Law_api_dict_id.
+Require Zstd.proof.laws.Law_api_flush_bound.
+Require Zstd.proof.laws.Law_api_frame_size.
+Require Zstd.proof.laws.Law_api_free_null.
+Require Zstd.proof.laws.Law_api_ignore_checksum.
+Require Zstd.proof.laws.Law_api_reset.
+Require Zstd.proof.laws.Law_api_short_output.
+Require Zstd.proof.laws.Law_api_split_invariant.
+Require Zstd.proof.laws.Law_api_untouched_output.
+Require Zstd.proof.laws.Law_ck_xxh64.
+Require Zstd.proof.laws.Law_res_free.
+Require Zstd.proof.laws.Law_res_memory_oneshot.
+Require Zstd.proof.laws.Law_res_memory_stream.
+Require Zstd.proof.laws.Law_rfc_concat.
+Require Zstd.proof.laws.Law_rfc_frame.
+Require Zstd.proof.laws.Law_rfc_skippable.
+Require Zstd.proof.laws.Law_rj_any_dict.
+Require Zstd.proof.laws.Law_rj_any_input.
+Require Zstd.proof.laws.Law_rj_any_stream.
+Require Zstd.proof.laws.Law_rj_bad_checksum.
+Require Zstd.proof.laws.Law_rj_content_size.
+Require Zstd.proof.laws.Law_rj_reserved_bit.
+Require Zstd.proof.laws.Law_rj_reserved_block.
+Require Zstd.proof.laws.Law_rj_truncated.
+
+(* The generated statement: the 44 laws. *)
 Theorem suite :
   harness_safe Zstd.contracts.api_content_size.whole_prog /\
   harness_safe Zstd.contracts.api_dict_id.whole_prog /\
@@ -99,5 +218,32 @@ Theorem suite :
   harness_safe Zstd.contracts.x_valid_oneshot.whole_prog /\
   harness_safe Zstd.contracts.x_valid_params.whole_prog /\
   harness_safe Zstd.contracts.x_valid_stream.whole_prog.
+(* The 25 short laws are the lemmas of src/proof/laws/; the 19 x_ conjuncts are suite_x. *)
 Proof.
-Admitted.
+  split; [exact Zstd.proof.laws.Law_api_content_size.api_content_size_safe |].
+  split; [exact Zstd.proof.laws.Law_api_dict_id.api_dict_id_safe |].
+  split; [exact Zstd.proof.laws.Law_api_flush_bound.api_flush_bound_safe |].
+  split; [exact Zstd.proof.laws.Law_api_frame_size.api_frame_size_safe |].
+  split; [exact Zstd.proof.laws.Law_api_free_null.api_free_null_safe |].
+  split; [exact Zstd.proof.laws.Law_api_ignore_checksum.api_ignore_checksum_safe |].
+  split; [exact Zstd.proof.laws.Law_api_reset.api_reset_safe |].
+  split; [exact Zstd.proof.laws.Law_api_short_output.api_short_output_safe |].
+  split; [exact Zstd.proof.laws.Law_api_split_invariant.api_split_invariant_safe |].
+  split; [exact Zstd.proof.laws.Law_api_untouched_output.api_untouched_output_safe |].
+  split; [exact Zstd.proof.laws.Law_ck_xxh64.ck_xxh64_safe |].
+  split; [exact Zstd.proof.laws.Law_res_free.res_free_safe |].
+  split; [exact Zstd.proof.laws.Law_res_memory_oneshot.res_memory_oneshot_safe |].
+  split; [exact Zstd.proof.laws.Law_res_memory_stream.res_memory_stream_safe |].
+  split; [exact Zstd.proof.laws.Law_rfc_concat.rfc_concat_safe |].
+  split; [exact Zstd.proof.laws.Law_rfc_frame.rfc_frame_safe |].
+  split; [exact Zstd.proof.laws.Law_rfc_skippable.rfc_skippable_safe |].
+  split; [exact Zstd.proof.laws.Law_rj_any_dict.rj_any_dict_safe |].
+  split; [exact Zstd.proof.laws.Law_rj_any_input.rj_any_input_safe |].
+  split; [exact Zstd.proof.laws.Law_rj_any_stream.rj_any_stream_safe |].
+  split; [exact Zstd.proof.laws.Law_rj_bad_checksum.rj_bad_checksum_safe |].
+  split; [exact Zstd.proof.laws.Law_rj_content_size.rj_content_size_safe |].
+  split; [exact Zstd.proof.laws.Law_rj_reserved_bit.rj_reserved_bit_safe |].
+  split; [exact Zstd.proof.laws.Law_rj_reserved_block.rj_reserved_block_safe |].
+  split; [exact Zstd.proof.laws.Law_rj_truncated.rj_truncated_safe |].
+  exact suite_x.
+Qed.
