@@ -4,7 +4,7 @@ This repository proves 44 specs of zstd's decoder with QuickProof v0.1.0 (the `q
 small C program, `harness/<name>.c`, that you can run. Its theorem says that for every value the spec draws, no run
 has undefined behaviour (through VST's adequacy theorem, whose instance for QuickProof's environment is upcoming) and
 every check in the spec holds. AI agents wrote the proofs, and Coq checks them, so nothing the agents wrote in the
-proofs is trusted.
+proofs is trusted. AI agents drafted the specs too, and they have not had a human review yet.
 
 **Status.** All 44 theorems are proved: the 25 short specs and the 19 `x_` specs, and `suite`, which states them
 together. The proof has no admitted lemma, and `qp verify` checks it against the contract (tag `contract`).
@@ -78,7 +78,7 @@ zstd's decoder at commit
 [`01b7154f1172432f8abe9b3bb9909e14a1176b7d`](https://github.com/facebook/zstd/commit/01b7154f1172432f8abe9b3bb9909e14a1176b7d)
 on the dev branch (2026-09-18), after release v1.5.7. This is not a release. The decoder is `lib/common` and
 `lib/decompress`, compiled as one unit (`patch/decoder.c`) with the flags of `quickproof.conf`. `lib/compress` is
-here only for native tests. The scripts in `patch/` made these edits, and every changed line carries a comment with
+here only for native tests. The scripts in `patch/` made these edits, and many changed lines carry a comment with
 the original ([patch/GENPROOF-PATCH.md](patch/GENPROOF-PATCH.md) describes each one):
 
 - idiom edits (items 1-20 in `zstdpatch.py`, and the VST layer in `vstpatch.py`): C that CompCert's semantics or

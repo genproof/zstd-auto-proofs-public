@@ -2,7 +2,7 @@
 
 `lib/` holds zstd 01b7154f1172 with the changes described here. The scripts in this directory made them, in this
 order: `zstdpatch.py`, `vstpatch.py`, `fixes.py`, `fixes2.py`, `fixes3.py`, `fixes4.py`, `fixes5.py`,
-`lawhooks.py`. They edit files in place, so do not run them on this tree. Every changed line carries a comment with
+`lawhooks.py`. They edit files in place, so do not run them on this tree. Many changed lines carry a comment with
 the original, tagged `genproof` (the idiom edits and the fixes of `fixes.py`) or with its F-number.
 
 - The idiom edits (`zstdpatch.py`, items 1-20, and the VST layer, `vstpatch.py`) rewrite C that CompCert's

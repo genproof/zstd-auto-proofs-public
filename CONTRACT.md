@@ -9,7 +9,7 @@
   resumed after one-shot decoding on the same context: it starts a new frame;
 - the added function `ZSTD_createDCtx_advancedP` (H1).
 
-`patch/GENPROOF-PATCH.md` describes each edit and why it is there; every changed line carries a `genproof:` or
+`patch/GENPROOF-PATCH.md` describes each edit and why it is there; many changed lines carry a `genproof:` or
 F-comment with the original. One unit, `patch/decoder.c`, includes the decoder's C files; the configuration (flags)
 is in `quickproof.conf`. `lib/compress` is here only for the native tests; it is not code under test.
 
